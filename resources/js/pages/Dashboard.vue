@@ -4,6 +4,8 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
+import { onMounted } from 'vue';
+import axios from 'axios';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -11,6 +13,15 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: dashboard().url,
     },
 ];
+
+onMounted(async () => {
+    try {
+        const response = await axios.get('/api/user');
+        console.log(response);
+    } catch (error) {
+        console.log(error)
+    }
+})
 </script>
 
 <template>
