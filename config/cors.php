@@ -21,7 +21,10 @@ return [
 
     'allowed_origins' => [
         'http://localhost.com:8000',
-        'http://localhost.com:5173'
+        'http://localhost.com:5173',
+        'http://10.0.0.171:8000',
+        'http://10.0.0.170:8000',
+        'http://10.0.0.170:5173'
     ],
 
     'allowed_origins_patterns' => [],

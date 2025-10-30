@@ -24,4 +24,22 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '0.0.0.0', // Listen to all network interfaces
+        hmr: {
+            // host: '10.0.0.171'
+            host: '10.0.0.170'
+        },
+        cors: {
+            origin: [
+                'http://localhost:8000',
+                'http://10.0.0.171:8000',
+                'http://10.0.0.171:5173',
+                'http://10.0.0.170:8000',
+                'http://10.0.0.170:5173'
+            ],
+            methods: [ 'GET', 'POST', 'PUT', 'DELETE' ],
+            allowedHeaders: [ 'Content-Type', 'Authorization' ]
+        }
+    }
 });
