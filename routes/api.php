@@ -2,6 +2,9 @@
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Events\TestPublicEvent;
+use App\Events\TestPrivateEvent;
+use App\Events\TestPresenceEvent;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
@@ -42,5 +45,27 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Access token in plain text
     Route::get('/user/access-token/plain-text', function (Request $request) {
         return [ 'token' => $request->bearerToken() ];
+    });
+
+    // Public event test
+    Route::post('/broadcast/test/public-event', function (Request $request) {
+        TestPublicEvent::dispatch($request->user());
+    });
+
+    // Private event test
+    Route::post('/broadcast/test/private-event', function (Request $request) {
+        $id = $request->input('id');
+        $user = User::where('id', '=', $id)->first();
+        
+        TestPrivateEvent::dispatch($user, $user->id);
+    });
+
+    // Presence event test
+    Route::post('/broadcast/test/presence-event', function (Request $request) {
+        $id = $request->input('id');
+        $roomId = $request->input('roomId');
+        $user = User::where('id', '=', $id)->first();
+
+        TestPresenceEvent::dispatch($user, $roomId);
     });
 });
