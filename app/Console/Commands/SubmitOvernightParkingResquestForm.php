@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use HeadlessChromium\BrowserFactory;
 
@@ -32,7 +33,6 @@ class SubmitOvernightParkingResquestForm extends Command
         $browser = $browserFactory->createBrowser([
             'headless' => true,
         ]);
-
 
         try {
             // Creates a new page and navigate to an URL
@@ -73,7 +73,7 @@ class SubmitOvernightParkingResquestForm extends Command
             // Wait for Vehicle Model dropdown to have options
             $ready = $page->evaluate("
                 (async () => {
-                    await new Promise((resolve) => {
+                    return await new Promise((resolve) => {
                         const check = setInterval(() => {
                             const modelDD = document.querySelector('#VehicleModelDropDownList');
                             if (modelDD && modelDD.options.length > 1) {
@@ -86,11 +86,10 @@ class SubmitOvernightParkingResquestForm extends Command
                             resolve(false);
                         }, 10000);
                     });
-                    return true;
                 })()
-            ");
+            ")->getReturnValue();
 
-            if ($ready->getReturnValue()) {
+            if ($ready) {
                 $this->info('Vehicle model dropdown ready!');
                 // Proceed with next step
                 $page->evaluate("
@@ -121,16 +120,43 @@ class SubmitOvernightParkingResquestForm extends Command
             $this->info('Submitting form...');
             $page->evaluate("document.querySelector('#SubmitButton').click()");
 
-            $page->waitUntilContainsElement('#MessagePanel');
-
-            $ready = $page->evaluate("
-                (() => {
-                    const message = document.querySelector('#MessagePanel').textContent;
-                    return message;
+            $message = $page->evaluate("
+                (async () => {
+                    return await new Promise((resolve) => {
+                        const check = setInterval(() => {
+                            const panel = document.querySelector('#RequestResultPanel');
+                            if (panel && panel.textContent.trim()) {
+                                clearInterval(check);
+                                resolve(panel.textContent.trim());
+                            }
+                        }, 100);
+                        setTimeout(() => {
+                            clearInterval(check);
+                            resolve(null);
+                        }, 10000);
+                    });
                 })();
-            ");
+            ")->getReturnValue();
 
-            $message = trim($ready->getReturnValue());
+            if (!$message) {
+                $message = $page->evaluate("
+                    (async () => {
+                        return await new Promise((resolve) => {
+                            const check = setInterval(() => {
+                                const panel = document.querySelector('#MessagePanel');
+                                if (panel && panel.textContent.trim()) {
+                                    clearInterval(check);
+                                    resolve(panel.textContent.trim());
+                                }
+                            }, 100);
+                            setTimeout(() => {
+                                clearInterval(check);
+                                resolve(null);
+                            }, 500);
+                        });
+                    })();
+                ")->getReturnValue();
+            }
 
             $screenshot = $page->screenshot([
                 'captureBeyondViewport' => true,
@@ -140,10 +166,12 @@ class SubmitOvernightParkingResquestForm extends Command
             $screenshotPath = storage_path()."/screenshots/parking_" . date('Y-m-d_His') . ".png";
             $screenshot->saveToFile($screenshotPath);
 
-            $this->info("Form submitted successfully!");
+            $this->info("Form submitted...");
             $this->info("Message: $message");
             $this->info("Screenshot saved: $screenshotPath");
 
+        } catch (Exception $exception) {
+            $this->error("Error: {$exception->getMessage()}");
         } finally {
             $browser->close();
         }
