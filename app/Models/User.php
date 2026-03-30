@@ -3,19 +3,21 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Database\Eloquent\BroadcastsEvents;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Broadcasting\PrivateChannel;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\BroadcastsEvents;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable, BroadcastsEvents;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable, BroadcastsEvents;
 
     /**
      * The attributes that are mass assignable.
@@ -102,5 +104,15 @@ class User extends Authenticatable
             ],
             default => ['model' => $this],
         };
+    }
+    
+    public function paystubs(): HasMany
+    {
+        return $this->hasMany(Paystub::class);
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class, 'account_holder_id');
     }
 }
